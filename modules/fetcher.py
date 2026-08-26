@@ -1,13 +1,20 @@
 import requests, re, html, logging
 from datetime import datetime, timezone, timedelta
-from config import *
 from pathlib import Path
+from config import *
 
-Path("log").mkdir(exist_ok=True)
 
-logging.basicConfig(filename="log/fetcher.log",
-                    level=logging.INFO,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+Path("logs").mkdir(exist_ok=True)
+
+_module_name = Path(__file__).stem
+
+logger = logging.getLogger(_module_name)
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    handler = logging.FileHandler(f"logs/{_module_name}.log", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
 
 
 def tag_cleaner(content):
@@ -46,21 +53,21 @@ def get_naver_news():
             response = requests.get(url, headers=naver_header, timeout=5)
             response.raise_for_status()
         except requests.exceptions.Timeout as e:
-            logging.error(f"네이버 API 요청 시간 초과 발생: {e}", exc_info=True)
+            logger.error(f"네이버 API 요청 시간 초과 발생: {e}", exc_info=True)
             continue
         except requests.exceptions.RequestException as e:
-            logging.error(f"네이버 API요청 실패: {e}", exc_info=True)
+            logger.error(f"네이버 API요청 실패: {e}", exc_info=True)
             continue
 
         try:
             result = response.json()
             items = result["items"]
         except (ValueError, KeyError):
-            logging.warning("응답 형식 오류 또는 items 값이 존재하지 않음")
+            logger.warning("응답 형식 오류 또는 items 값이 존재하지 않음")
             continue
 
         if not items:
-            logging.warning("검색 결과값이 존재하지 않음")
+            logger.warning("검색 결과값이 존재하지 않음")
             continue
 
         for item in items:
@@ -79,6 +86,6 @@ def get_naver_news():
                                                    reverse=True)
 
     if not news_list:
-        logging.info("최종적으로 수집된 뉴스가 없음")
+        logger.info("최종적으로 수집된 뉴스가 없음")
 
     return news_list
