@@ -5,7 +5,7 @@ from modules.video import get_next_background
 from config import *
 
 
-logging.basicConfig(filename="processor.log",
+logging.basicConfig(filename="log/processor.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
