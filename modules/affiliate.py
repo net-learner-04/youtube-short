@@ -1,13 +1,20 @@
 import hmac, hashlib, time, urllib.parse, requests, logging
 from datetime import datetime, timezone
-from config import *
 from pathlib import Path
+from config import *
 
-Path("log").mkdir(exist_ok=True)
 
-logging.basicConfig(filename="log/affiliate.log",
-                    level=logging.INFO,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+Path("logs").mkdir(exist_ok=True)
+
+_module_name = Path(__file__).stem
+
+logger = logging.getLogger(_module_name)
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    handler = logging.FileHandler(f"logs/{_module_name}.log", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
 
 
 def generate_hmac_signature(method, url_path):
@@ -55,17 +62,17 @@ def convert_to_deeplink(coupang_url):
         )
         response.raise_for_status()
     except requests.exceptions.Timeout as e:
-        logging.error(f"쿠팡 API 요청 시간 초과: {e}", exc_info=True)
+        logger.error(f"쿠팡 API 요청 시간 초과: {e}", exc_info=True)
         return None
     except requests.exceptions.RequestException as e:
-        logging.error(f"쿠팡 API 요청 실패: {e}", exc_info=True)
+        logger.error(f"쿠팡 API 요청 실패: {e}", exc_info=True)
         return None
 
     try:
         result = response.json()
         shorten_url = result["data"][0]["shortenUrl"]
     except (ValueError, KeyError, IndexError) as e:
-        logging.error(f"쿠팡 API 응답 파싱 실패: {e}", exc_info=True)
+        logger.error(f"쿠팡 API 응답 파싱 실패: {e}", exc_info=True)
         return None
 
     return shorten_url
@@ -93,12 +100,12 @@ def get_affiliate_link(news_item):
     affiliate_link = convert_to_deeplink(search_url)
 
     if affiliate_link is None:
-        logging.warning(f"[{news_id}] '{keyword}' 딥링크 생성 실패")
+        logger.warning(f"[{news_id}] '{keyword}' 딥링크 생성 실패")
         return None
 
     landing_url = build_landing_page_url(news_id, keyword, affiliate_link)
 
-    logging.info(f"[{news_id}] '{keyword}' 제휴 링크 생성 완료: {landing_url}")
+    logger.info(f"[{news_id}] '{keyword}' 제휴 링크 생성 완료: {landing_url}")
 
     return {
         "keyword": keyword,
@@ -111,7 +118,7 @@ def get_affiliate_link(news_item):
 def get_affiliates(video_results):
     """영상까지 완성된 기사 리스트를 받아 기사별로 제휴 링크를 생성해 붙이는 함수"""
     if not video_results:
-        logging.warning("제휴 링크를 생성할 영상 결과가 존재하지 않음")
+        logger.warning("제휴 링크를 생성할 영상 결과가 존재하지 않음")
         return []
 
     results = []
