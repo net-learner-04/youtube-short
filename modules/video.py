@@ -2,6 +2,7 @@ import requests, logging
 from pathlib import Path
 from config import *
 
+Path("log").mkdir(exist_ok=True)
 
 logging.basicConfig(filename="log/video.log",
                     level=logging.INFO,
