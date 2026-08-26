@@ -3,6 +3,7 @@ from pathlib import Path
 from config import *
 from modules.db import init_db
 
+Path("log").mkdir(exist_ok=True)
 
 logging.basicConfig(filename="log/setup.log",
                     level=logging.INFO,
