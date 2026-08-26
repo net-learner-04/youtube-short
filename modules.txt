@@ -1,0 +1,8 @@
+requests 
+python-dotenv
+openai
+edge-tts
+pillow
+fastapi
+uvicorn[standard]
+jinja2
