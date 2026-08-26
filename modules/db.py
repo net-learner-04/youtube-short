@@ -4,7 +4,7 @@ from datetime import datetime
 from config import *
 
 
-logging.basicConfig(filename="db.log",
+logging.basicConfig(filename="log/db.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
