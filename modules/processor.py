@@ -4,11 +4,18 @@ from PIL import Image, ImageDraw, ImageFont
 from modules.video import get_next_background
 from config import *
 
-Path("log").mkdir(exist_ok=True)
 
-logging.basicConfig(filename="log/processor.log",
-                    level=logging.INFO,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+Path("logs").mkdir(exist_ok=True)
+
+_module_name = Path(__file__).stem
+
+logger = logging.getLogger(_module_name)
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    handler = logging.FileHandler(f"logs/{_module_name}.log", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
 
 
 def create_title_card(news_item):
@@ -122,7 +129,7 @@ def concat_audio(news_item):
     try:
         subprocess.run(command, capture_output=True, text=True, timeout=30, check=True)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        logging.error(f"오디오 병합 실패 ({news_item['audio']['news_id']}): {e}", exc_info=True)
+        logger.error(f"오디오 병합 실패 ({news_item['audio']['news_id']}): {e}", exc_info=True)
         return None
 
     return merged_path
@@ -157,10 +164,10 @@ def render_video(news_item, background_path, title_card_path, subtitle_path, aud
     try:
         subprocess.run(command, capture_output=True, text=True, timeout=120, check=True)
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        logging.error(f"영상 렌더링 실패 ({news_id}): {e}", exc_info=True)
+        logger.error(f"영상 렌더링 실패 ({news_id}): {e}", exc_info=True)
         return None
 
-    logging.info(f"[{news_id}] 영상 렌더링 완료: {output_path}")
+    logger.info(f"[{news_id}] 영상 렌더링 완료: {output_path}")
 
     return output_path
 
@@ -178,7 +185,7 @@ def process_video(news_item):
     audio_path = concat_audio(news_item)
 
     if audio_path is None:
-        logging.warning(f"[{news_id}] 오디오 병합 실패로 렌더링 스킵")
+        logger.warning(f"[{news_id}] 오디오 병합 실패로 렌더링 스킵")
         return None
 
     video_path = render_video(news_item, background_path, title_card_path, subtitle_path, audio_path)
@@ -189,7 +196,7 @@ def process_video(news_item):
 def get_videos(audio_results):
     """오디오까지 생성된 기사 리스트를 받아 기사별로 최종 shorts.mp4를 렌더링하는 함수"""
     if not audio_results:
-        logging.warning("영상을 렌더링할 오디오 결과가 존재하지 않음")
+        logger.warning("영상을 렌더링할 오디오 결과가 존재하지 않음")
         return []
 
     results = []
@@ -201,6 +208,6 @@ def get_videos(audio_results):
             results.append({**news_item, "video_path": str(video_path)})
 
     if len(results) < len(audio_results):
-        logging.warning(f"요청한 {len(audio_results)}개 중 {len(results)}개만 렌더링됨")
+        logger.warning(f"요청한 {len(audio_results)}개 중 {len(results)}개만 렌더링됨")
 
     return results
