@@ -1,7 +1,9 @@
 import re, logging
 from datetime import datetime
 from config import *
+from pathlib import Path
 
+Path("log").mkdir(exist_ok=True)
 
 logging.basicConfig(filename="log/select.log",
                     level=logging.INFO,
