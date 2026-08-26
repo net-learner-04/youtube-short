@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from config import *
 
 
-logging.basicConfig(filename="affiliate.log",
+logging.basicConfig(filename="log/affiliate.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
