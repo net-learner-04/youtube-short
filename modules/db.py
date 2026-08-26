@@ -3,11 +3,18 @@ from pathlib import Path
 from datetime import datetime
 from config import *
 
-Path("log").mkdir(exist_ok=True)
 
-logging.basicConfig(filename="log/db.log",
-                    level=logging.INFO,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+Path("logs").mkdir(exist_ok=True)
+
+_module_name = Path(__file__).stem
+
+logger = logging.getLogger(_module_name)
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    handler = logging.FileHandler(f"logs/{_module_name}.log", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
 
 
 def get_connection():
@@ -59,7 +66,7 @@ def save_processed_news(news_item):
         )
         conn.commit()
     except sqlite3.IntegrityError:
-        logging.warning(f"이미 기록된 기사 (link 중복): {news_item['link']}")
+        logger.warning(f"이미 기록된 기사 (link 중복): {news_item['link']}")
     finally:
         conn.close()
 
@@ -73,6 +80,6 @@ def filter_new_news(news_list):
 
     excluded_count = len(news_list) - len(filtered)
     if excluded_count > 0:
-        logging.info(f"이전에 처리된 기사 {excluded_count}개 제외됨")
+        logger.info(f"이전에 처리된 기사 {excluded_count}개 제외됨")
 
     return filtered
