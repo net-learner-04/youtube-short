@@ -1,13 +1,20 @@
 import json, logging
 from openai import OpenAI
-from config import *
 from pathlib import Path
+from config import *
 
-Path("log").mkdir(exist_ok=True)
 
-logging.basicConfig(filename="log/script.log",
-                    level=logging.INFO,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+Path("logs").mkdir(exist_ok=True)
+
+_module_name = Path(__file__).stem
+
+logger = logging.getLogger(_module_name)
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    handler = logging.FileHandler(f"logs/{_module_name}.log", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
 
 client = OpenAI(
     api_key=DEEPSEEK_API_KEY,
@@ -79,13 +86,13 @@ def parse_response(raw_response):
     try:
         parsed = json.loads(raw_response)
     except (ValueError, TypeError) as e:
-        logging.error(f"DeepSeek 응답 JSON 파싱 실패: {e}", exc_info=True)
+        logger.error(f"DeepSeek 응답 JSON 파싱 실패: {e}", exc_info=True)
         return None
 
     missing_keys = [key for key in required_keys if key not in parsed]
 
     if missing_keys:
-        logging.warning(f"응답에 필수 키 누락: {missing_keys}")
+        logger.warning(f"응답에 필수 키 누락: {missing_keys}")
         return None
 
     return parsed
@@ -98,16 +105,16 @@ def generate_script(news_item):
     try:
         raw_response = ask_deepseek(prompt)
     except Exception as e:
-        logging.error(f"DeepSeek API 요청 실패: {e}", exc_info=True)
+        logger.error(f"DeepSeek API 요청 실패: {e}", exc_info=True)
         return None
 
     parsed = parse_response(raw_response)
 
     if parsed is None:
-        logging.warning(f"[{news_item['keyword']}] {news_item['title'][:25]}... 대본 생성 실패")
+        logger.warning(f"[{news_item['keyword']}] {news_item['title'][:25]}... 대본 생성 실패")
         return None
 
-    logging.info(f"[{news_item['keyword']}] {news_item['title'][:25]}... 대본 생성 완료")
+    logger.info(f"[{news_item['keyword']}] {news_item['title'][:25]}... 대본 생성 완료")
 
     return {**news_item, "script": parsed}
 
@@ -115,7 +122,7 @@ def generate_script(news_item):
 def get_scripts(selected_news):
     """선별된 기사 리스트를 받아 기사별로 대본을 생성해 리스트로 반환하는 함수"""
     if not selected_news:
-        logging.warning("대본을 생성할 기사가 존재하지 않음")
+        logger.warning("대본을 생성할 기사가 존재하지 않음")
         return []
 
     scripts = []
@@ -126,6 +133,6 @@ def get_scripts(selected_news):
             scripts.append(result)
 
     if len(scripts) < len(selected_news):
-        logging.warning(f"요청한 {len(selected_news)}개 중 {len(scripts)}개만 대본 생성됨")
+        logger.warning(f"요청한 {len(selected_news)}개 중 {len(scripts)}개만 대본 생성됨")
 
     return scripts
