@@ -84,3 +84,6 @@ YOUTUBE_PRIVACY_STATUS = "public"
 
 # db 파일 경로
 DB_PATH = str(BASE_DIR / "storage" / "db" / "news_history.db")
+
+# 쿠팡 전용 유튜브 고정 댓글 포맷
+COUPANG_DISCLOSURE_TEXT = "이 영상은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다."
