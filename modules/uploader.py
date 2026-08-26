@@ -7,6 +7,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from config import *
 
+Path("log").mkdir(exist_ok=True)
 
 logging.basicConfig(filename="log/uploader.log",
                     level=logging.INFO,
