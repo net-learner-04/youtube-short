@@ -1,7 +1,9 @@
 import requests, re, html, logging
 from datetime import datetime, timezone, timedelta
 from config import *
+from pathlib import Path
 
+Path("log").mkdir(exist_ok=True)
 
 logging.basicConfig(filename="log/fetcher.log",
                     level=logging.INFO,
