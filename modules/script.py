@@ -1,7 +1,9 @@
 import json, logging
 from openai import OpenAI
 from config import *
+from pathlib import Path
 
+Path("log").mkdir(exist_ok=True)
 
 logging.basicConfig(filename="log/script.log",
                     level=logging.INFO,
