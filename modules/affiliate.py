@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from config import *
 from pathlib import Path
 
-Path("logs").mkdir(exist_ok=True)
+Path("log").mkdir(exist_ok=True)
 
 logging.basicConfig(filename="log/affiliate.log",
                     level=logging.INFO,
