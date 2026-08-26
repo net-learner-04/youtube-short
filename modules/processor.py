@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 from modules.video import get_next_background
 from config import *
 
+Path("log").mkdir(exist_ok=True)
 
 logging.basicConfig(filename="log/processor.log",
                     level=logging.INFO,
