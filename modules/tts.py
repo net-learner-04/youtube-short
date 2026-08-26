@@ -5,7 +5,7 @@ import edge_tts
 from config import *
 
 
-logging.basicConfig(filename="tts.log",
+logging.basicConfig(filename="log/tts.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
