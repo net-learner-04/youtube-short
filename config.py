@@ -87,3 +87,17 @@ DB_PATH = str(BASE_DIR / "storage" / "db" / "news_history.db")
 
 # 쿠팡 전용 유튜브 고정 댓글 포맷
 COUPANG_DISCLOSURE_TEXT = "이 영상은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받을 수 있습니다."
+
+PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
+
+# Pexels 검색어 매핑 키워드 목록
+PEXELS_QUERY_MAP = {
+    "방산": "military weapons defense",
+    "kpop": "concert crowd stage lights",
+    "전통": "korean traditional culture hanbok",
+    "이재명": "national assembly government building",
+    "케이팝": "kpop concert stage performance",
+}
+
+# 키워드별로 미리 확보해둘 배경 영상 최소 개수 (부족하면 자동으로 더 받아옴)
+MINIMUM_VIDEO_COUNT = 8
