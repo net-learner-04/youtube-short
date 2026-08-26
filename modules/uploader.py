@@ -38,15 +38,27 @@ def get_youtube_client():
     return build("youtube", "v3", credentials=creds)
 
 
+def build_video_description(news_item):
+    """유튜브 설명란에 원본 설명 + 쿠팡 파트너스 고지 문구를 결합하는 함수"""
+    base_description = news_item["script"]["youtube_description"]
+
+    if news_item.get("affiliate") is not None:
+        return f"{base_description}\n\n{COUPANG_DISCLOSURE_TEXT}"
+
+    return base_description
+
+
 def upload_video(youtube, news_item):
     """완성된 mp4 파일을 YouTube에 업로드하는 함수"""
     news_id = news_item["audio"]["news_id"]
     script_data = news_item["script"]
 
+    description = build_video_description(news_item)
+
     body = {
         "snippet": {
             "title": script_data["youtube_title"],
-            "description": script_data["youtube_description"],
+            "description": description,
             "tags": script_data["youtube_tags"],
             "categoryId": YOUTUBE_CATEGORY_ID
         },
@@ -85,7 +97,8 @@ def build_pinned_comment(news_item):
     comment_text = (
         f"오늘 영상에서 소개한 '{keyword}' 관련 상품이 궁금하다면? 👇\n"
         f"{landing_url}\n\n"
-        f"구독과 좋아요는 큰 힘이 됩니다 :)"
+        f"구독과 좋아요는 큰 힘이 됩니다 :)\n\n"
+        f"{COUPANG_DISCLOSURE_TEXT}"
     )
 
     return comment_text
