@@ -42,6 +42,9 @@ DEEPSEEK_API_KEY=
 # Coupang Partners API
 COUPANG_ACCESS_KEY=
 COUPANG_SECRET_KEY=
+
+# Pexels Api Key
+PEXELS_API_KEY=
 """
 
     env_path.write_text(template, encoding="utf-8")
