@@ -2,7 +2,6 @@ import sqlite3, logging
 from pathlib import Path
 from datetime import datetime
 from config import *
-from pathlib import Path
 
 Path("log").mkdir(exist_ok=True)
 
