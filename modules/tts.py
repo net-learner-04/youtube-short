@@ -4,6 +4,7 @@ from datetime import datetime
 import edge_tts
 from config import *
 
+Path("log").mkdir(exist_ok=True)
 
 logging.basicConfig(filename="log/tts.log",
                     level=logging.INFO,
