@@ -13,7 +13,7 @@ def get_query_for_keyword(keyword):
     return PEXELS_QUERY_MAP.get(keyword, keyword)
 
 
-def search_pexels_videos(query, per_page=BACKGROUND_POOL_SIZE):
+def search_pexels_videos(query, per_page=MINIMUM_VIDEO_COUNT):
     """Pexels API로 세로형(9:16) 스톡 영상을 검색하는 함수"""
     headers = {"Authorization": PEXELS_API_KEY}
     params = {
@@ -64,13 +64,13 @@ def download_video(url, save_path):
     return True
 
 
-def ensure_background_pool(keyword):
-    """키워드 폴더에 배경 영상이 BACKGROUND_POOL_SIZE 미만이면 Pexels에서 추가로 받아오는 함수"""
+def ensure_video_pool(keyword):
+    """키워드 폴더에 배경 영상이 MINIMUM_VIDEO_COUNT 미만이면 Pexels에서 추가로 받아오는 함수"""
     keyword_dir = Path(ASSETS_PATH) / keyword
     keyword_dir.mkdir(parents=True, exist_ok=True)
 
     existing_videos = list(keyword_dir.glob("*.mp4"))
-    shortage = BACKGROUND_POOL_SIZE - len(existing_videos)
+    shortage = MINIMUM_VIDEO_COUNT - len(existing_videos)
 
     if shortage <= 0:
         return
@@ -96,7 +96,7 @@ def ensure_background_pool(keyword):
 
 def get_next_background(keyword):
     """키워드 폴더 안에서 로테이션 방식으로 배경 영상을 선택하는 함수"""
-    ensure_background_pool(keyword)
+    ensure_video_pool(keyword)
 
     keyword_dir = Path(ASSETS_PATH) / keyword
     videos = sorted(keyword_dir.glob("*.mp4"))
