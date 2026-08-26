@@ -3,7 +3,7 @@ from openai import OpenAI
 from config import *
 
 
-logging.basicConfig(filename="script.log",
+logging.basicConfig(filename="log/script.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
