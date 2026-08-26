@@ -7,11 +7,18 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from config import *
 
-Path("log").mkdir(exist_ok=True)
 
-logging.basicConfig(filename="log/uploader.log",
-                    level=logging.INFO,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+Path("logs").mkdir(exist_ok=True)
+
+_module_name = Path(__file__).stem
+
+logger = logging.getLogger(_module_name)
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    handler = logging.FileHandler(f"logs/{_module_name}.log", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.upload",
           "https://www.googleapis.com/auth/youtube.force-ssl"]
@@ -76,10 +83,10 @@ def upload_video(youtube, news_item):
         response = request.execute()
         video_id = response["id"]
     except Exception as e:
-        logging.error(f"[{news_id}] 영상 업로드 실패: {e}", exc_info=True)
+        logger.error(f"[{news_id}] 영상 업로드 실패: {e}", exc_info=True)
         return None
 
-    logging.info(f"[{news_id}] 업로드 완료 (video_id: {video_id})")
+    logger.info(f"[{news_id}] 업로드 완료 (video_id: {video_id})")
 
     return video_id
 
@@ -89,7 +96,7 @@ def build_pinned_comment(news_item):
     affiliate_data = news_item.get("affiliate")
 
     if affiliate_data is None:
-        logging.warning(f"[{news_item['audio']['news_id']}] 제휴 링크 없음, 고정 댓글 생략")
+        logger.warning(f"[{news_item['audio']['news_id']}] 제휴 링크 없음, 고정 댓글 생략")
         return None
 
     keyword = affiliate_data["keyword"]
@@ -128,10 +135,10 @@ def post_pinned_comment(youtube, video_id, comment_text):
         ).execute()
 
     except Exception as e:
-        logging.error(f"댓글 작성/고정 실패 (video_id: {video_id}): {e}", exc_info=True)
+        logger.error(f"댓글 작성/고정 실패 (video_id: {video_id}): {e}", exc_info=True)
         return None
 
-    logging.info(f"video_id {video_id}에 고정 댓글 작성 완료")
+    logger.info(f"video_id {video_id}에 고정 댓글 작성 완료")
 
     return comment_id
 
@@ -154,7 +161,7 @@ def process_upload(youtube, news_item):
 def upload_all(affiliate_results):
     """제휴 링크까지 완성된 기사 리스트를 받아 순차적으로 YouTube에 업로드하는 함수"""
     if not affiliate_results:
-        logging.warning("업로드할 영상이 존재하지 않음")
+        logger.warning("업로드할 영상이 존재하지 않음")
         return []
 
     youtube = get_youtube_client()
@@ -166,6 +173,6 @@ def upload_all(affiliate_results):
             uploaded.append({**news_item, "youtube_video_id": video_id})
 
     if len(uploaded) < len(affiliate_results):
-        logging.warning(f"요청한 {len(affiliate_results)}개 중 {len(uploaded)}개만 업로드됨")
+        logger.warning(f"요청한 {len(affiliate_results)}개 중 {len(uploaded)}개만 업로드됨")
 
     return uploaded
