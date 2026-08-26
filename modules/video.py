@@ -3,7 +3,7 @@ from pathlib import Path
 from config import *
 
 
-logging.basicConfig(filename="video.log",
+logging.basicConfig(filename="log/video.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
