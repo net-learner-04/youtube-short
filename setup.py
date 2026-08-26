@@ -149,10 +149,6 @@ def setup():
     """프로젝트 초기 세팅을 한 번에 실행하는 함수"""
     logging.info("===== 프로젝트 초기 세팅 시작 =====")
 
-    current_dir = Path(__file__).resolve().parent
-    log_dir = current_dir / "log"
-    log_dir.mkdir(exist_ok=True)
-
     create_directories()
     create_env_template()
     init_db()
