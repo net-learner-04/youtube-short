@@ -3,7 +3,7 @@ from datetime import datetime, timezone, timedelta
 from config import *
 
 
-logging.basicConfig(filename="fetcher.log",
+logging.basicConfig(filename="log/fetcher.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
