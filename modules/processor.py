@@ -1,43 +1,13 @@
 import subprocess, logging
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
+from modules.video import get_next_background
 from config import *
 
 
 logging.basicConfig(filename="processor.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
-
-
-def get_background_videos():
-    """storage/assets 폴더에서 배경 루프 영상 목록을 정렬해서 가져오는 함수"""
-    assets_dir = Path(ASSETS_PATH)
-    videos = sorted(assets_dir.glob("*.mp4"))
-
-    if not videos:
-        logging.error("배경 루프 영상이 storage/assets 폴더에 존재하지 않음")
-
-    return videos
-
-
-def get_next_background():
-    """로테이션 방식으로 배경 루프 영상을 순서대로 선택하는 함수 (DB 없이 인덱스 파일로 관리)"""
-    videos = get_background_videos()
-
-    if not videos:
-        return None
-
-    index_file = Path(ASSETS_PATH) / ".rotation_index"
-
-    try:
-        current_index = int(index_file.read_text().strip())
-    except (FileNotFoundError, ValueError):
-        current_index = 0
-
-    selected = videos[current_index % len(videos)]
-    index_file.write_text(str(current_index + 1))
-
-    return selected
 
 
 def create_title_card(news_item):
@@ -198,7 +168,7 @@ def process_video(news_item):
     """기사 1개를 받아 타이틀 카드/자막/오디오 병합/렌더링까지 전체 처리하는 함수"""
     news_id = news_item["audio"]["news_id"]
 
-    background_path = get_next_background()
+    background_path = get_next_background(news_item["keyword"])
     if background_path is None:
         return None
 
