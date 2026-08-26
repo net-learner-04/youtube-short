@@ -8,7 +8,7 @@ from googleapiclient.http import MediaFileUpload
 from config import *
 
 
-logging.basicConfig(filename="uploader.log",
+logging.basicConfig(filename="log/uploader.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
