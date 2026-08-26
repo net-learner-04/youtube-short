@@ -2,11 +2,18 @@ import requests, logging
 from pathlib import Path
 from config import *
 
-Path("log").mkdir(exist_ok=True)
 
-logging.basicConfig(filename="log/video.log",
-                    level=logging.INFO,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+Path("logs").mkdir(exist_ok=True)
+
+_module_name = Path(__file__).stem
+
+logger = logging.getLogger(_module_name)
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    handler = logging.FileHandler(f"logs/{_module_name}.log", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
 
 
 def get_query_for_keyword(keyword):
@@ -30,17 +37,17 @@ def search_pexels_videos(query, per_page=MINIMUM_VIDEO_COUNT):
         )
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        logging.error(f"Pexels API 요청 실패 (query={query}): {e}", exc_info=True)
+        logger.error(f"Pexels API 요청 실패 (query={query}): {e}", exc_info=True)
         return []
 
     try:
         results = response.json()["videos"]
     except (ValueError, KeyError):
-        logging.warning(f"Pexels 응답 파싱 실패 (query={query})")
+        logger.warning(f"Pexels 응답 파싱 실패 (query={query})")
         return []
 
     video_urls = []
-  
+
     for video in results:
         hd_files = [f for f in video["video_files"] if f.get("quality") == "hd" and f["width"] < f["height"]]
         if hd_files:
@@ -55,7 +62,7 @@ def download_video(url, save_path):
         response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        logging.error(f"영상 다운로드 실패 ({url}): {e}", exc_info=True)
+        logger.error(f"영상 다운로드 실패 ({url}): {e}", exc_info=True)
         return False
 
     with open(save_path, "wb") as f:
@@ -76,13 +83,13 @@ def ensure_video_pool(keyword):
     if shortage <= 0:
         return
 
-    logging.info(f"[{keyword}] 배경 영상 {shortage}개 부족, Pexels에서 추가 다운로드 시도")
+    logger.info(f"[{keyword}] 배경 영상 {shortage}개 부족, Pexels에서 추가 다운로드 시도")
 
     query = get_query_for_keyword(keyword)
     video_urls = search_pexels_videos(query, per_page=shortage)
 
     if not video_urls:
-        logging.warning(f"[{keyword}] '{query}' 검색 결과 없음")
+        logger.warning(f"[{keyword}] '{query}' 검색 결과 없음")
         return
 
     downloaded_count = 0
@@ -90,9 +97,9 @@ def ensure_video_pool(keyword):
         save_path = keyword_dir / f"{keyword}_{len(existing_videos) + idx + 1}.mp4"
         if download_video(url, save_path):
             downloaded_count += 1
-            logging.info(f"[{keyword}] 배경 영상 다운로드 완료: {save_path.name}")
+            logger.info(f"[{keyword}] 배경 영상 다운로드 완료: {save_path.name}")
 
-    logging.info(f"[{keyword}] 총 {downloaded_count}개 다운로드 완료")
+    logger.info(f"[{keyword}] 총 {downloaded_count}개 다운로드 완료")
 
 
 def get_next_background(keyword):
@@ -103,7 +110,7 @@ def get_next_background(keyword):
     videos = sorted(keyword_dir.glob("*.mp4"))
 
     if not videos:
-        logging.error(f"[{keyword}] 배경 영상이 존재하지 않음 (다운로드 실패 가능성)")
+        logger.error(f"[{keyword}] 배경 영상이 존재하지 않음 (다운로드 실패 가능성)")
         return None
 
     index_file = keyword_dir / ".rotation_index"
