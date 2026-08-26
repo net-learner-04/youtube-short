@@ -4,7 +4,8 @@ from config import *
 from modules.db import init_db
 
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(filename="log/setup.log",
+                    level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
 BASE_DIR = Path(__file__).parent
