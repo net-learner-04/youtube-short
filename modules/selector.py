@@ -1,13 +1,20 @@
 import re, logging
 from datetime import datetime
-from config import *
 from pathlib import Path
+from config import *
 
-Path("log").mkdir(exist_ok=True)
 
-logging.basicConfig(filename="log/select.log",
-                    level=logging.INFO,
-                    format="%(asctime)s - %(levelname)s - %(message)s")
+Path("logs").mkdir(exist_ok=True)
+
+_module_name = Path(__file__).stem
+
+logger = logging.getLogger(_module_name)
+logger.setLevel(logging.INFO)
+
+if not logger.handlers:
+    handler = logging.FileHandler(f"logs/{_module_name}.log", encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
 
 
 def char_bigrams(text):
@@ -122,7 +129,7 @@ def select_news(news_list, count):
     news_list = [item for item in news_list if validity_check(item)]
 
     if not news_list:
-        logging.warning("선별할 뉴스가 존재하지 않음")
+        logger.warning("선별할 뉴스가 존재하지 않음")
         return []
 
     duplication_scores = calculate_duplication_scores(news_list)
@@ -133,7 +140,7 @@ def select_news(news_list, count):
         scored_item = {**news_item, "score": round(total, 2), "score_detail": breakdown}
         scored_news.append(scored_item)
 
-        logging.info(
+        logger.info(
             f"[{news_item['keyword']}] {news_item['title'][:25]}... "
             f"score={scored_item['score']} detail={breakdown}"
         )
@@ -142,6 +149,6 @@ def select_news(news_list, count):
     selected = scored_news[:count]
 
     if len(selected) < count:
-        logging.warning(f"요청한 {count}개보다 적은 {len(selected)}개만 선별됨")
+        logger.warning(f"요청한 {count}개보다 적은 {len(selected)}개만 선별됨")
 
     return selected
