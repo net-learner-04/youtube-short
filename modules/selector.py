@@ -3,7 +3,7 @@ from datetime import datetime
 from config import *
 
 
-logging.basicConfig(filename="select.log",
+logging.basicConfig(filename="log/select.log",
                     level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
 
