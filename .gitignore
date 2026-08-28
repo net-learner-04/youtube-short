@@ -5,6 +5,7 @@ youtube_token.pickle
 storage/audio/
 storage/processed/
 storage/db/*.db
+fonts/*.ttf
 
 __pycache__/
 *.pyc
