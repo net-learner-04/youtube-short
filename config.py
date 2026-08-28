@@ -5,6 +5,10 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent
 dotenv.load_dotenv(Path(__file__).parent / ".env")
 
+# 영상에서 사용할 폰트 위치
+FONT_DIR = str(BASE_DIR / "fonts")
+FONT_PATH = str(BASE_DIR / "fonts" / "NanumGothic.ttf")
+
 # 테스트 중엔 True로 설정 (제휴 링크 생성 및 유튜브 업로드를 건너뛰고 영상 생성까지만 확인)
 TEST_MODE = True
 
