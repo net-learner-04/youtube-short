@@ -1,4 +1,4 @@
-import requests, re, html, logging
+import requests, re, html, urllib.parse, logging
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from config import *
@@ -15,6 +15,20 @@ if not logger.handlers:
     handler = logging.FileHandler(f"logs/{_module_name}.log", encoding="utf-8")
     handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     logger.addHandler(handler)
+
+
+def get_press_name(originallink):
+    """기사 원본 링크의 도메인을 기반으로 언론사명을 추론하는 함수"""
+    try:
+        domain = urllib.parse.urlparse(originallink).netloc.replace("www.", "")
+    except Exception:
+        return "출처 미상"
+
+    for domain_key, press_name in PRESS_DOMAIN_MAP.items():
+        if domain_key in domain:
+            return press_name
+
+    return domain if domain else "출처 미상"
 
 
 def tag_cleaner(content):
@@ -77,7 +91,8 @@ def get_naver_news():
                 "originallink": item["originallink"],
                 "description": tag_cleaner(item["description"]),
                 "pubDate": item["pubDate"],
-                "keyword": keyword
+                "keyword": keyword,
+                "source": get_press_name(item["originallink"])
             })
 
     news_list = [item for item in news_list if time_filter(item["pubDate"])]
