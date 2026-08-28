@@ -155,7 +155,7 @@ def render_video(news_item, background_path, title_card_path, subtitle_path, aud
         "-i", str(audio_path),
         "-filter_complex", filter_complex,
         "-map", "[vout]", "-map", "2:a",
-        "-c:v", "h264_qsv", "-preset", "veryfast",
+        "-c:v", "libx264", "-preset", "fast", "-crf", "23",
         "-c:a", "aac", "-b:a", "128k",
         "-t", str(duration),
         str(output_path)
