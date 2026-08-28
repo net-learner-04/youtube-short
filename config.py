@@ -90,14 +90,53 @@ COUPANG_DISCLOSURE_TEXT = "이 영상은 쿠팡 파트너스 활동의 일환으
 
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
 
-# Pexels 검색어 매핑 키워드 목록
+import random
+
+# 네이버 키워드 -> Pexels 검색어 매핑
 PEXELS_QUERY_MAP = {
-    "방산": "military weapons defense",
-    "kpop": "concert crowd stage lights",
-    "전통": "korean traditional culture hanbok",
-    "이재명": "national assembly government building",
-    "케이팝": "kpop concert stage performance",
+    "방산": [
+        "military weapons defense",
+        "fighter jet aircraft",
+        "army soldiers training",
+        "tank military vehicle",
+        "naval warship ocean",
+    ],
+    "kpop": [
+        "concert crowd stage lights",
+        "dance performance stage",
+        "music festival crowd",
+        "singer microphone stage",
+    ],
+    "전통": [
+        "korean traditional culture hanbok",
+        "korean palace architecture",
+        "traditional tea ceremony",
+        "korean temple lantern",
+        "traditional market street",
+    ],
+    "이재명": [
+        "press conference microphone podium",
+        "government building flag",
+        "news studio broadcast",
+        "city hall building exterior",
+        "parliament meeting room",
+    ],
+    "케이팝": [
+        "kpop concert stage performance",
+        "idol dance practice",
+        "led screen concert lights",
+        "fan crowd cheering concert",
+    ],
 }
+
+# 매핑에 없는 키워드이거나, 검색 결과가 0개일 때 사용할 범용 대체 검색어
+FALLBACK_QUERY_LIST = [
+    "city skyline night korea",
+    "seoul cityscape aerial",
+    "korea street night lights",
+    "modern city buildings",
+    "news broadcast studio",
+]
 
 # 키워드별로 미리 확보해둘 배경 영상 최소 개수 (부족하면 자동으로 더 받아옴)
 MINIMUM_VIDEO_COUNT = 8
