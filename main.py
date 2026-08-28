@@ -26,10 +26,10 @@ async def main():
     video_results = get_videos(audio_results)
 
     for item in video_results:
-        print(f"영상 생성 완료: {item['video_path']}")
+        print(f"\n영상 생성 완료: {item['video_path']}\n")
 
     if TEST_MODE:
-        print("TEST_MODE=True 이므로 제휴 링크 생성 및 업로드는 건너뜁니다.")
+        print("TEST_MODE=True 이므로 제휴 링크 생성 및 업로드는 건너뜁니다.\n")
         return video_results
 
     affiliate_results = get_affiliates(video_results)
@@ -37,7 +37,7 @@ async def main():
 
     for item in uploaded:
         save_processed_news(item)
-        print(f"업로드 완료: {item['script']['youtube_title']} (video_id: {item['youtube_video_id']})")
+        print(f"업로드 완료: {item['script']['youtube_title']} (video_id: {item['youtube_video_id']})\n")
 
     return uploaded
 
