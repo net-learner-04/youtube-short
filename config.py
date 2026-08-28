@@ -14,17 +14,63 @@ NAVER_CLIENT_ID = os.getenv("NAVER_CLIENT_ID")
 
 # 좀 더 집중적으로 볼 뉴스 관련 키워드 목록
 HOT_WORDS = [
-    "역대", "최초", "충격", "발칵", "논란", "화제", "긴급", "속보",
-    "단독", "이례적", "경악", "반전", "깜짝", "초유", "열광", "폭주"
+    "역대", "최초", "급등", "급락", "폭등", "폭락", "비상",
+    "사상 최고", "사상 최저", "발칵", "충격", "경고", "긴급",
+    "단독", "이례적", "패닉", "초유", "휘청", "요동"
 ]
 
-# 원하는 키워드 입력 (가중치는 1.0으로 고정)
+# 원하는 키워드 입력 (가중치는 시장 관심도에 따라 차등)
 NAVER_KEYWORD = {
-    "방산": 1.0,
-    "kpop": 1.0,
-    "전통": 1.0,
-    "이재명": 1.0,
-    "케이팝": 1.0,
+    # 통화정책 / 금리
+    "기준금리": 1.2,
+    "한국은행": 1.0,
+    "연준": 1.2,
+    "미국 금리": 1.1,
+
+    # 증시
+    "코스피": 1.0,
+    "코스닥": 0.9,
+    "미국 증시": 1.0,
+    "나스닥": 1.0,
+    "S&P500": 0.9,
+
+    # 외환
+    "환율": 1.1,
+    "원달러 환율": 1.0,
+    "엔화": 0.8,
+
+    # 원자재 / 에너지
+    "국제유가": 1.0,
+    "금값": 1.0,
+    "원자재 가격": 0.8,
+
+    # 가상자산
+    "비트코인": 1.1,
+    "암호화폐": 0.9,
+    "가상자산": 0.8,
+
+    # 부동산
+    "부동산 시장": 1.0,
+    "아파트 가격": 0.9,
+    "전세 대출": 0.8,
+
+    # 물가 / 소비
+    "물가 상승률": 1.1,
+    "소비자물가": 1.0,
+    "생활물가": 0.9,
+
+    # 산업 / 무역
+    "반도체 수출": 1.0,
+    "수출입 동향": 0.8,
+    "관세": 0.9,
+
+    # 고용 / 거시
+    "고용지표": 0.8,
+    "GDP 성장률": 0.9,
+
+    # 글로벌 경제 일반
+    "글로벌 경제": 0.9,
+    "세계 경제": 0.8,
 }
 
 # 키워드 별로 뽑아올 뉴스 개수 입력
@@ -38,7 +84,7 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 DEEPSEEK_MODEL = "deepseek-v4-flash"
 
 # 시스템 프롬프트에 작성할 값으로 인공지능이 수행해야 할 역할 입력
-SYSTEM_PROMPT = "국뽕 쇼츠 대본 작가"
+SYSTEM_PROMPT = "경제/금융 전문 쇼츠 대본 작가"
 
 # 하루에 생성할 영상 개수 입력
 DAILY_VIDEO_COUNT = 1
@@ -65,14 +111,13 @@ FONT_PATH = str(BASE_DIR / "fonts" / "NanumGothic.ttf")
 VIDEO_WIDTH = 1080
 VIDEO_HEIGHT = 1920
 TITLE_CARD_FONT_SIZE = 60
-TITLE_CARD_BOX_COLOR = (0, 0, 0, 160)
 # ffmpeg ass 필터가 시스템에서 찾을 폰트명
 SUBTITLE_FONT_NAME = "NanumGothic"
 SUBTITLE_FONT_SIZE = 64
 HEADER_HEIGHT = 260
 FOOTER_HEIGHT = 260
 SOURCE_FONT_SIZE = 40
-SUBTITLE_MARGIN_V = 50 
+SUBTITLE_MARGIN_V = 50
 TITLE_CARD_BOX_COLOR = (0, 0, 0, 255)
 FOOTER_BOX_COLOR = (0, 0, 0, 255)
 
@@ -102,48 +147,55 @@ import random
 
 # 네이버 키워드 -> Pexels 검색어 매핑
 PEXELS_QUERY_MAP = {
-    "방산": [
-        "military weapons defense",
-        "fighter jet aircraft",
-        "army soldiers training",
-        "tank military vehicle",
-        "naval warship ocean",
-    ],
-    "kpop": [
-        "concert crowd stage lights",
-        "dance performance stage",
-        "music festival crowd",
-        "singer microphone stage",
-    ],
-    "전통": [
-        "korean traditional culture hanbok",
-        "korean palace architecture",
-        "traditional tea ceremony",
-        "korean temple lantern",
-        "traditional market street",
-    ],
-    "이재명": [
-        "press conference microphone podium",
-        "government building flag",
-        "news studio broadcast",
-        "city hall building exterior",
-        "parliament meeting room",
-    ],
-    "케이팝": [
-        "kpop concert stage performance",
-        "idol dance practice",
-        "led screen concert lights",
-        "fan crowd cheering concert",
-    ],
+    "기준금리": ["central bank building", "federal reserve building", "bank interest rate", "financial district skyscraper"],
+    "한국은행": ["central bank building", "bank of korea", "financial district seoul", "korean won money"],
+    "연준": ["federal reserve building", "washington dc government", "central bank meeting", "us capitol building"],
+    "미국 금리": ["federal reserve building", "wall street new york", "us dollar bills", "financial district night"],
+
+    "코스피": ["stock market trading floor", "stock chart graph screen", "trading desk monitors", "stock exchange board"],
+    "코스닥": ["stock chart graph screen", "trading desk monitors", "stock market ticker", "financial data screen"],
+    "미국 증시": ["wall street new york", "stock market ticker", "nyse trading floor", "financial district night"],
+    "나스닥": ["stock market trading floor", "tech company office", "stock chart graph screen", "trading desk monitors"],
+    "S&P500": ["stock market ticker", "stock chart graph screen", "wall street new york", "financial data screen"],
+
+    "환율": ["currency exchange money", "dollar bills stack", "foreign currency notes", "money exchange booth"],
+    "원달러 환율": ["dollar bills stack", "korean won money", "currency exchange money", "money exchange booth"],
+    "엔화": ["japanese yen currency", "currency exchange money", "foreign currency notes", "tokyo financial district"],
+
+    "국제유가": ["oil rig ocean", "oil barrel industry", "gas station fuel", "crude oil pipeline"],
+    "금값": ["gold bars stack", "gold jewelry shop", "precious metal bullion", "gold mining"],
+    "원자재 가격": ["shipping port containers", "industrial factory", "commodity warehouse", "raw materials industry"],
+
+    "비트코인": ["bitcoin cryptocurrency coin", "crypto trading screen", "digital currency concept", "blockchain technology"],
+    "암호화폐": ["crypto trading screen", "digital currency concept", "bitcoin cryptocurrency coin", "blockchain technology"],
+    "가상자산": ["digital currency concept", "crypto trading screen", "blockchain technology", "bitcoin cryptocurrency coin"],
+
+    "부동산 시장": ["apartment buildings city", "real estate housing", "construction site city", "residential skyline"],
+    "아파트 가격": ["apartment buildings city", "residential skyline", "korean apartment complex", "real estate housing"],
+    "전세 대출": ["bank building exterior", "real estate housing", "apartment buildings city", "home loan document"],
+
+    "물가 상승률": ["grocery store shopping", "supermarket aisle", "market vegetables prices", "shopping cart groceries"],
+    "소비자물가": ["supermarket aisle", "grocery store shopping", "shopping cart groceries", "market vegetables prices"],
+    "생활물가": ["market vegetables prices", "grocery store shopping", "supermarket aisle", "shopping cart groceries"],
+
+    "반도체 수출": ["semiconductor factory", "microchip technology", "factory production line", "shipping port containers"],
+    "수출입 동향": ["shipping port containers", "cargo ship ocean", "factory production line", "global trade cargo"],
+    "관세": ["shipping port containers", "cargo ship ocean", "customs border", "global trade cargo"],
+
+    "고용지표": ["office workers meeting", "job interview office", "business team working", "corporate office building"],
+    "GDP 성장률": ["city skyline aerial", "factory production line", "business district buildings", "global economy trade"],
+
+    "글로벌 경제": ["world map globe finance", "container ship port", "global trade cargo", "business meeting office"],
+    "세계 경제": ["world map globe finance", "global trade cargo", "container ship port", "business meeting office"],
 }
 
 # 매핑에 없는 키워드이거나, 검색 결과가 0개일 때 사용할 범용 대체 검색어
 FALLBACK_QUERY_LIST = [
-    "city skyline night korea",
-    "seoul cityscape aerial",
-    "korea street night lights",
-    "modern city buildings",
-    "news broadcast studio",
+    "stock market chart",
+    "city financial district",
+    "business office skyline",
+    "money finance concept",
+    "global economy trade",
 ]
 
 # 키워드별로 미리 확보해둘 배경 영상 최소 개수 (부족하면 자동으로 더 받아옴)
@@ -172,4 +224,11 @@ PRESS_DOMAIN_MAP = {
     "donga.com": "동아일보",
     "nocutnews.co.kr": "노컷뉴스",
     "jtbc.co.kr": "JTBC",
+    "biz.chosun.com": "조선비즈",
+    "sedaily.com": "서울경제",
+    "fnnews.com": "파이낸셜뉴스",
+    "asiae.co.kr": "아시아경제",
+    "moneys.co.kr": "머니S",
+    "kmib.co.kr": "국민일보",
+    "bloter.net": "블로터",
 }
