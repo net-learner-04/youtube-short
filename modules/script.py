@@ -65,11 +65,11 @@ def ask_deepseek(prompt, system_prompt=SYSTEM_PROMPT):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ],
-        temperature=0.7,
         max_tokens=4096,
         response_format={
             "type": "json_object"
-        }
+        },
+        extra_body={"thinking": {"type": "disabled"}}
     )
 
     choice = response.choices[0]
