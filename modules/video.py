@@ -1,4 +1,4 @@
-import requests, random, logging
+import requests, random, json, logging
 from pathlib import Path
 from config import *
 
@@ -112,16 +112,34 @@ def ensure_video_pool(keyword):
     logger.info(f"[{keyword}] 총 {downloaded_count}개 다운로드 완료")
 
 
-def get_next_background(keyword):
-    """키워드 폴더 안에서 로테이션 방식으로 배경 영상을 선택하는 함수"""
+def probe_duration(file_path):
+    """ffprobe로 영상 파일의 재생시간(초)을 계산하는 함수"""
+    command = [
+        "ffprobe", "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "json",
+        str(file_path)
+    ]
+
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=10, check=True)
+        duration = float(json.loads(result.stdout)["format"]["duration"])
+        return duration
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ValueError, KeyError) as e:
+        logger.error(f"영상 재생시간 계산 실패 ({file_path}): {e}", exc_info=True)
+        return None
+
+
+def get_background_sequence(keyword, total_duration):
+    """전체 길이를 채울 때까지 로테이션 방식으로 여러 배경 영상을 이어붙여 선택하는 함수"""
     ensure_video_pool(keyword)
 
     keyword_dir = Path(ASSETS_PATH) / keyword
     videos = sorted(keyword_dir.glob("*.mp4"))
 
     if not videos:
-        logger.error(f"[{keyword}] 배경 영상이 존재하지 않음 (다운로드 실패 가능성)")
-        return None
+        logger.error(f"[{keyword}] 배경 영상이 존재하지 않음")
+        return []
 
     index_file = keyword_dir / ".rotation_index"
 
@@ -130,7 +148,27 @@ def get_next_background(keyword):
     except (FileNotFoundError, ValueError):
         current_index = 0
 
-    selected = videos[current_index % len(videos)]
-    index_file.write_text(str(current_index + 1))
+    sequence = []
+    accumulated = 0.0
+    idx = current_index
+    max_attempts = len(videos) * 3
 
-    return selected
+    for _ in range(max_attempts):
+        if accumulated >= total_duration:
+            break
+
+        video_path = videos[idx % len(videos)]
+        duration = probe_duration(video_path)
+
+        if duration:
+            sequence.append({"path": video_path, "duration": duration})
+            accumulated += duration
+
+        idx += 1
+
+    index_file.write_text(str(idx))
+
+    if not sequence:
+        logger.error(f"[{keyword}] 배경 영상 시퀀스를 하나도 만들지 못함")
+
+    return sequence
