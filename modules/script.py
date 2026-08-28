@@ -66,13 +66,20 @@ def ask_deepseek(prompt, system_prompt=SYSTEM_PROMPT):
             {"role": "user", "content": prompt}
         ],
         temperature=0.7,
-        max_tokens=2048,
+        max_tokens=4096,
         response_format={
             "type": "json_object"
         }
     )
 
-    return response.choices[0].message.content
+    choice = response.choices[0]
+    finish_reason = choice.finish_reason
+    content = choice.message.content
+
+    if finish_reason != "stop":
+        logger.warning(f"DeepSeek 응답이 정상 종료되지 않음 (finish_reason={finish_reason})")
+
+    return content
 
 
 def parse_response(raw_response):
@@ -83,10 +90,15 @@ def parse_response(raw_response):
         "youtube_description", "youtube_tags"
     ]
 
+    if not raw_response:
+        logger.error("DeepSeek 응답이 비어있음 (None 또는 빈 문자열)")
+        return None
+
     try:
         parsed = json.loads(raw_response)
     except (ValueError, TypeError) as e:
         logger.error(f"DeepSeek 응답 JSON 파싱 실패: {e}", exc_info=True)
+        logger.error(f"파싱 실패한 원본 응답 (앞 500자): {raw_response[:500]}")
         return None
 
     missing_keys = [key for key in required_keys if key not in parsed]
