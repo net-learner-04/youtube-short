@@ -1,7 +1,7 @@
 import subprocess, logging
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-from modules.video import get_next_background
+from modules.video import get_background_sequence
 from config import *
 
 
@@ -19,24 +19,24 @@ if not logger.handlers:
 
 
 def create_title_card(news_item):
-    """뉴스 헤드라인을 상단에 고정 노출할 반투명 타이틀 카드 PNG를 생성하는 함수"""
-    card = Image.new("RGBA", (VIDEO_WIDTH, VIDEO_HEIGHT), (0, 0, 0, 0))
+    """뉴스 헤드라인을 담은 상단 고정 헤더 카드(불투명 검정 바) PNG를 생성하는 함수"""
+    card = Image.new("RGBA", (VIDEO_WIDTH, HEADER_HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(card)
-    font = ImageFont.truetype(FONT_PATH, TITLE_CARD_FONT_SIZE)
+    draw.rectangle([(0, 0), (VIDEO_WIDTH, HEADER_HEIGHT)], fill=TITLE_CARD_BOX_COLOR)
 
+    font = ImageFont.truetype(FONT_PATH, TITLE_CARD_FONT_SIZE)
     title = news_item["title"]
     lines = wrap_text(title, font, draw, max_width=VIDEO_WIDTH - 80)
 
-    box_height = 60 + len(lines) * (TITLE_CARD_FONT_SIZE + 20)
-    draw.rectangle([(0, 0), (VIDEO_WIDTH, box_height)], fill=TITLE_CARD_BOX_COLOR)
+    line_height = TITLE_CARD_FONT_SIZE + 20
+    total_text_height = len(lines) * line_height - 20
+    y = (HEADER_HEIGHT - total_text_height) / 2
 
-    y = 30
-    
     for line in lines:
         text_width = draw.textlength(line, font=font)
         x = (VIDEO_WIDTH - text_width) / 2
         draw.text((x, y), line, font=font, fill=(255, 255, 255, 255))
-        y += TITLE_CARD_FONT_SIZE + 20
+        y += line_height
 
     output_path = Path(news_item["audio"]["audio_dir"]) / "title_card.png"
     card.save(output_path)
@@ -44,8 +44,26 @@ def create_title_card(news_item):
     return output_path
 
 
+def create_footer_card(news_item):
+    """영상 하단 고정 푸터 카드(불투명 검정 바, 출처 표기) PNG를 생성하는 함수"""
+    card = Image.new("RGBA", (VIDEO_WIDTH, FOOTER_HEIGHT), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(card)
+    draw.rectangle([(0, 0), (VIDEO_WIDTH, FOOTER_HEIGHT)], fill=FOOTER_BOX_COLOR)
+
+    font = ImageFont.truetype(FONT_PATH, SOURCE_FONT_SIZE)
+    source_text = f"출처: {news_item.get('source', '출처 미상')}"
+    text_width = draw.textlength(source_text, font=font)
+    x = (VIDEO_WIDTH - text_width) / 2
+    draw.text((x, 30), source_text, font=font, fill=(200, 200, 200, 255))
+
+    output_path = Path(news_item["audio"]["audio_dir"]) / "footer_card.png"
+    card.save(output_path)
+
+    return output_path
+
+
 def wrap_text(text, font, draw, max_width):
-    """긴 헤드라인을 타이틀 카드 너비에 맞게 줄바꿈하는 함수"""
+    """긴 텍스트를 지정된 너비에 맞게 줄바꿈하는 함수"""
     words = text.split()
     lines, current_line = [], ""
 
@@ -74,7 +92,7 @@ def seconds_to_ass_time(seconds):
 
 
 def build_subtitle_file(news_item):
-    """오디오 문장별 재생시간을 기준으로 .ass 자막 파일을 생성하는 함수"""
+    """오디오 문장별 재생시간을 기준으로, 푸터 영역 안에 위치할 .ass 자막 파일을 생성하는 함수"""
     audio_dir = Path(news_item["audio"]["audio_dir"])
     ass_path = audio_dir / "subtitle.ass"
 
@@ -85,7 +103,7 @@ PlayResY: {VIDEO_HEIGHT}
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, OutlineColour, Bold, BorderStyle, Outline, Shadow, Alignment, MarginV
-Style: Default,{SUBTITLE_FONT_NAME},{SUBTITLE_FONT_SIZE},&H00FFFFFF,&H00000000,1,1,4,0,2,150
+Style: Default,{SUBTITLE_FONT_NAME},{SUBTITLE_FONT_SIZE},&H00FFFFFF,&H00000000,1,1,4,0,2,{SUBTITLE_MARGIN_V}
 
 [Events]
 Format: Layer, Start, End, Style, Text
@@ -126,42 +144,62 @@ def concat_audio(news_item):
         str(merged_path)
     ]
 
-    try:
-        subprocess.run(command, capture_output=True, text=True, timeout=30, check=True)
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        logger.error(f"오디오 병합 실패 ({news_item['audio']['news_id']}): {e}", exc_info=True)
+    result = subprocess.run(command, capture_output=True, text=True, timeout=30)
+
+    if result.returncode != 0:
+        logger.error(f"오디오 병합 실패 ({news_item['audio']['news_id']})\nSTDERR:\n{result.stderr}")
         return None
 
     return merged_path
 
 
-def render_video(news_item, background_path, title_card_path, subtitle_path, audio_path):
-    """배경 영상 + 타이틀 카드 + 자막 + 오디오를 합성해 QSV 하드웨어 가속으로 최종 렌더링하는 함수"""
+def render_video(news_item, background_sequence, header_path, footer_path, subtitle_path, audio_path):
+    """여러 배경 영상을 이어붙이고, 헤더/푸터/자막/오디오를 합성해 최종 렌더링하는 함수"""
     news_id = news_item["audio"]["news_id"]
     output_path = Path(PROCESSED_PATH) / f"{news_id}.mp4"
     duration = news_item["audio"]["total_duration"]
+    video_area_height = VIDEO_HEIGHT - HEADER_HEIGHT - FOOTER_HEIGHT
 
-    filter_complex = (
-        f"[0:v]scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}:force_original_aspect_ratio=increase,"
-        f"crop={VIDEO_WIDTH}:{VIDEO_HEIGHT},setsar=1[bg];"
-        f"[bg][1:v]overlay=0:0[titled];"
-        f"[titled]ass={subtitle_path}[vout]"
-    )
+    command = ["ffmpeg", "-y"]
 
-    command = [
-        "ffmpeg", "-y",
-        "-stream_loop", "-1", "-i", str(background_path),
-        "-i", str(title_card_path),
-        "-i", str(audio_path),
+    for clip in background_sequence:
+        command += ["-i", str(clip["path"])]
+
+    header_idx = len(background_sequence)
+    footer_idx = header_idx + 1
+    audio_idx = footer_idx + 1
+
+    command += ["-i", str(header_path), "-i", str(footer_path), "-i", str(audio_path)]
+
+    filter_parts = []
+    concat_labels = ""
+
+    for i in range(len(background_sequence)):
+        filter_parts.append(
+            f"[{i}:v]scale={VIDEO_WIDTH}:{video_area_height}:force_original_aspect_ratio=increase,"
+            f"crop={VIDEO_WIDTH}:{video_area_height},setsar=1,fps=30[v{i}]"
+        )
+        concat_labels += f"[v{i}]"
+
+    filter_parts.append(f"{concat_labels}concat=n={len(background_sequence)}:v=1:a=0[vidconcat]")
+    filter_parts.append(f"color=black:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:d={duration}[canvas]")
+    filter_parts.append(f"[canvas][vidconcat]overlay=0:{HEADER_HEIGHT}[bg1]")
+    filter_parts.append(f"[bg1][{header_idx}:v]overlay=0:0[bg2]")
+    filter_parts.append(f"[bg2][{footer_idx}:v]overlay=0:{VIDEO_HEIGHT - FOOTER_HEIGHT}[bg3]")
+    filter_parts.append(f"[bg3]ass={subtitle_path}[vout]")
+
+    filter_complex = ";".join(filter_parts)
+
+    command += [
         "-filter_complex", filter_complex,
-        "-map", "[vout]", "-map", "2:a",
+        "-map", "[vout]", "-map", f"{audio_idx}:a",
         "-c:v", "libx264", "-preset", "fast", "-crf", "23",
         "-c:a", "aac", "-b:a", "128k",
         "-t", str(duration),
         str(output_path)
     ]
 
-    result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+    result = subprocess.run(command, capture_output=True, text=True, timeout=180)
 
     if result.returncode != 0:
         logger.error(f"영상 렌더링 실패 ({news_id})\nSTDERR:\n{result.stderr}")
@@ -173,14 +211,16 @@ def render_video(news_item, background_path, title_card_path, subtitle_path, aud
 
 
 def process_video(news_item):
-    """기사 1개를 받아 타이틀 카드/자막/오디오 병합/렌더링까지 전체 처리하는 함수"""
+    """기사 1개를 받아 헤더/푸터/자막/오디오/배경시퀀스까지 전체 처리하는 함수"""
     news_id = news_item["audio"]["news_id"]
+    duration = news_item["audio"]["total_duration"]
 
-    background_path = get_next_background(news_item["keyword"])
-    if background_path is None:
+    background_sequence = get_background_sequence(news_item["keyword"], duration)
+    if not background_sequence:
         return None
 
-    title_card_path = create_title_card(news_item)
+    header_path = create_title_card(news_item)
+    footer_path = create_footer_card(news_item)
     subtitle_path = build_subtitle_file(news_item)
     audio_path = concat_audio(news_item)
 
@@ -188,7 +228,7 @@ def process_video(news_item):
         logger.warning(f"[{news_id}] 오디오 병합 실패로 렌더링 스킵")
         return None
 
-    video_path = render_video(news_item, background_path, title_card_path, subtitle_path, audio_path)
+    video_path = render_video(news_item, background_sequence, header_path, footer_path, subtitle_path, audio_path)
 
     return video_path
 
