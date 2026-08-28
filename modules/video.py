@@ -89,7 +89,11 @@ def ensure_video_pool(keyword):
     video_urls = search_pexels_videos(query, per_page=shortage)
 
     if not video_urls:
-        logger.warning(f"[{keyword}] '{query}' 검색 결과 없음")
+        logger.warning(f"[{keyword}] '{query}' 검색 결과 없음, 대체 검색어로 재시도")
+        video_urls = search_pexels_videos(FALLBACK_QUERY, per_page=shortage)
+
+    if not video_urls:
+        logger.warning(f"[{keyword}] 대체 검색어 '{FALLBACK_QUERY}'도 검색 결과 없음")
         return
 
     downloaded_count = 0
