@@ -41,7 +41,7 @@ DEEPSEEK_MODEL = "deepseek-v4-flash"
 SYSTEM_PROMPT = "국뽕 쇼츠 대본 작가"
 
 # 하루에 생성할 영상 개수 입력
-DAILY_VIDEO_COUNT = 5
+DAILY_VIDEO_COUNT = 1
 
 # 제목 유사도로 이슈 분류에 사용 (0.45 이상이면 같은 이슈로 판단)
 SIMILARITY_THRESHOLD = 0.45
@@ -57,7 +57,7 @@ AUDIO_PATH = str(BASE_DIR / "storage" / "audio")
 ASSETS_PATH = str(BASE_DIR / "storage" / "assets")
 PROCESSED_PATH = str(BASE_DIR / "storage" / "processed")
 # 한글 지원 폰트 저장 경로 (실행 전 파일명 정확히 입력)
-FONT_PATH = str(BASE_DIR / "storage" / "assets" / ".ttf")
+FONT_PATH = str(BASE_DIR / "storage" / "assets" / "NanumGothic.ttf")
 
 # 비디오 환경 설정
 VIDEO_WIDTH = 1080
@@ -65,8 +65,14 @@ VIDEO_HEIGHT = 1920
 TITLE_CARD_FONT_SIZE = 60
 TITLE_CARD_BOX_COLOR = (0, 0, 0, 160)
 # ffmpeg ass 필터가 시스템에서 찾을 폰트명
-SUBTITLE_FONT_NAME = ""
+SUBTITLE_FONT_NAME = "NanumGothic"
 SUBTITLE_FONT_SIZE = 64
+HEADER_HEIGHT = 260
+FOOTER_HEIGHT = 260
+SOURCE_FONT_SIZE = 40
+SUBTITLE_MARGIN_V = 50 
+TITLE_CARD_BOX_COLOR = (0, 0, 0, 255)
+FOOTER_BOX_COLOR = (0, 0, 0, 255)
 
 # 쿠팡 API KEYS
 COUPANG_ACCESS_KEY = os.getenv("COUPANG_ACCESS_KEY")
@@ -140,3 +146,28 @@ FALLBACK_QUERY_LIST = [
 
 # 키워드별로 미리 확보해둘 배경 영상 최소 개수 (부족하면 자동으로 더 받아옴)
 MINIMUM_VIDEO_COUNT = 8
+
+# originallink 도메인 -> 언론사명 매핑
+PRESS_DOMAIN_MAP = {
+    "yna.co.kr": "연합뉴스",
+    "chosun.com": "조선일보",
+    "joongang.co.kr": "중앙일보",
+    "joins.com": "중앙일보",
+    "hani.co.kr": "한겨레",
+    "khan.co.kr": "경향신문",
+    "mk.co.kr": "매일경제",
+    "hankyung.com": "한국경제",
+    "sbs.co.kr": "SBS",
+    "kbs.co.kr": "KBS",
+    "imbc.com": "MBC",
+    "ytn.co.kr": "YTN",
+    "news1.kr": "뉴스1",
+    "newsis.com": "뉴시스",
+    "edaily.co.kr": "이데일리",
+    "mt.co.kr": "머니투데이",
+    "hankookilbo.com": "한국일보",
+    "seoul.co.kr": "서울신문",
+    "donga.com": "동아일보",
+    "nocutnews.co.kr": "노컷뉴스",
+    "jtbc.co.kr": "JTBC",
+}
