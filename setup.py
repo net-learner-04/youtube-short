@@ -26,6 +26,7 @@ def create_directories():
         Path(ASSETS_PATH),
         Path(PROCESSED_PATH),
         Path(DB_PATH).parent,
+        Path(FONT_DIR),
     ]
 
     for directory in directories:
@@ -61,7 +62,7 @@ PEXELS_API_KEY=
 
 
 def check_font_file():
-    """Pillow 타이틀 카드용 한글 폰트 파일(FONT_PATH) 존재 여부를 확인하는 함수"""
+    """Pillow/ffmpeg에서 쓸 한글 폰트 파일(FONT_PATH)이 fonts/ 디렉토리에 있는지 확인하는 함수"""
     font_path = Path(FONT_PATH)
 
     if font_path.exists():
@@ -70,7 +71,7 @@ def check_font_file():
         logger.warning(
             f"폰트 파일이 없습니다: {font_path}\n"
             f"  -> Pretendard, 나눔고딕 등 한글 지원 폰트(.ttf)를 다운받아 "
-            f"위 경로에 직접 넣어야 합니다."
+            f"'{FONT_DIR}' 디렉토리에 넣어야 합니다."
         )
 
 
