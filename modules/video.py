@@ -1,4 +1,4 @@
-import requests, logging
+import requests, random, logging
 from pathlib import Path
 from config import *
 
@@ -17,8 +17,13 @@ if not logger.handlers:
 
 
 def get_query_for_keyword(keyword):
-    """네이버 키워드를 Pexels 검색어로 변환하는 함수"""
-    return PEXELS_QUERY_MAP.get(keyword, keyword)
+    """네이버 키워드를 Pexels 검색어로 변환하는 함수 (후보 중 랜덤 선택, 매핑 없으면 키워드 그대로 사용)"""
+    queries = PEXELS_QUERY_MAP.get(keyword)
+
+    if not queries:
+        return keyword
+
+    return random.choice(queries)
 
 
 def search_pexels_videos(query, per_page=MINIMUM_VIDEO_COUNT):
@@ -89,11 +94,12 @@ def ensure_video_pool(keyword):
     video_urls = search_pexels_videos(query, per_page=shortage)
 
     if not video_urls:
-        logger.warning(f"[{keyword}] '{query}' 검색 결과 없음, 대체 검색어로 재시도")
-        video_urls = search_pexels_videos(FALLBACK_QUERY, per_page=shortage)
+        fallback_query = random.choice(FALLBACK_QUERY_LIST)
+        logger.warning(f"[{keyword}] '{query}' 검색 결과 없음, 대체 검색어 '{fallback_query}'로 재시도")
+        video_urls = search_pexels_videos(fallback_query, per_page=shortage)
 
     if not video_urls:
-        logger.warning(f"[{keyword}] 대체 검색어 '{FALLBACK_QUERY}'도 검색 결과 없음")
+        logger.warning(f"[{keyword}] 대체 검색어도 검색 결과 없음")
         return
 
     downloaded_count = 0
