@@ -161,10 +161,10 @@ def render_video(news_item, background_path, title_card_path, subtitle_path, aud
         str(output_path)
     ]
 
-    try:
-        subprocess.run(command, capture_output=True, text=True, timeout=120, check=True)
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        logger.error(f"영상 렌더링 실패 ({news_id}): {e}", exc_info=True)
+    result = subprocess.run(command, capture_output=True, text=True, timeout=120)
+
+    if result.returncode != 0:
+        logger.error(f"영상 렌더링 실패 ({news_id})\nSTDERR:\n{result.stderr}")
         return None
 
     logger.info(f"[{news_id}] 영상 렌더링 완료: {output_path}")
